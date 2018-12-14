@@ -8,6 +8,10 @@ contraLibTarget = contraLib.split('/')[1]
 
 dslJob = 'dsl_seed'
 
+def getComponents() {
+    return ['component1', component2'].join(',')
+}
+
 job(dslJob) {
     multiscm {
         git {
@@ -40,6 +44,7 @@ job(dslJob) {
             additionalClasspath(["${contraLibTarget}/src", "${dslVarTarget}/src"].join("\n")) 
         }
     }
+    environmentVariables(COMPONENT_JOBS: getComponents())
 }
 
 queue(dslJob)
