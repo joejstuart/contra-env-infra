@@ -16,7 +16,7 @@ metadata:
 parameters:
 - name: REPO_URL
   description: The repo url that contains the source. e.g. https://github.com/CentOS-PaaS-SIG/ci-pipeline.git
-  value: https://github.com/CentOS-PaaS-SIG/contra-env-infra
+  value: https://github.com/joejstuart/contra-env-infra
   required: true
 - name: REPO_CONTEXTDIR
   description: The sub-directory inside the repository. e.g. config/Dockerfiles/gitlab
@@ -51,11 +51,8 @@ objects:
         uri: ${REPO_URL}
       type: Git
     strategy:
-      sourceStrategy:
-        from:
-          kind: DockerImage
-          name: docker.io/gitlab/gitlab-ce
-      type: Source
+      dockerStrategy:
+      type: Docker
     triggers:
     - type: ConfigChange
 - apiVersion: v1
@@ -68,9 +65,9 @@ objects:
   spec:
     ports:
     - name: gitlab-web
-      port: 32769
+      port: 443
       protocol: TCP
-      targetPort: 32769
+      targetPort: 443
     selector:
       metrics: gitlab
     sessionAffinity: None
@@ -116,7 +113,7 @@ objects:
           imagePullPolicy: Always
           name: gitlab
           ports:
-          - containerPort: 32769
+          - containerPort: 443
             protocol: TCP
         dnsPolicy: ClusterFirst
         restartPolicy: Always

@@ -43,4 +43,3 @@ CMD ["/assets/wrapper"]
 
 HEALTHCHECK --interval=60s --timeout=30s --retries=5 \
 CMD /opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10
-
