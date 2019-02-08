@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: gitlab
+  annotations:
+    openshift.io/display-name: gitlab
+    description: |-
+             contra gitlab template
+    iconClass: icon-jenkins
+    tags: instant-app,influxdb
+    template.openshift.io/long-description: Grafana container
+    template.openshift.io/provider-display-name: Red Hat, Inc.
+    template.openshift.io/documentation-url: https://docs.openshift.org/latest
+    template.openshift.io/support-url: https://access.redhat.com
+parameters:
+- name: REPO_URL
+  description: The repo url that contains the source. e.g. https://github.com/CentOS-PaaS-SIG/ci-pipeline.git
+  value: https://github.com/CentOS-PaaS-SIG/contra-env-infra
+  required: true
+- name: REPO_CONTEXTDIR
+  description: The sub-directory inside the repository. e.g. config/Dockerfiles/gitlab
+  value: gitlab
+  required: true
+- name: REPO_REF
+  description: The git ref or tag to use for customization.
+  value: gitlab
+  required: true
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+    labels:
+    name: gitlab
+  spec: {}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    name: gitlab
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: gitlab:latest
+    resources: {}
+    source:
+      contextDir: ${REPO_CONTEXTDIR}
+      git:
+        ref: ${REPO_REF}
+        uri: ${REPO_URL}
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: DockerImage
+          name: docker.io/gitlab/gitlab-ce
+      type: Source
+    triggers:
+    - type: ConfigChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    labels:
+      metrics: gitlab
+    name: gitlab
+  spec:
+    ports:
+    - name: gitlab-web
+      port: 32769
+      protocol: TCP
+      targetPort: 32769
+    selector:
+      metrics: gitlab
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    labels:
+      metrics: gitlab
+    name: gitlab
+  spec:
+    strategy:
+      type: Recreate
+    triggers:
+    - type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+        - gitlab
+        from:
+          kind: ImageStreamTag
+          name: gitlab:latest
+          namespace: cpaas
+          lastTriggeredImage: ''
+    - type: ConfigChange
+    replicas: 1
+    selector:
+      metrics: gitlab
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          metrics: gitlab
+      spec:
+        containers:
+        - env:
+          - name: GITLAB_HOST
+            value: gitlab
+          image: gitlab:stable
+          imagePullPolicy: Always
+          name: gitlab
+          ports:
+          - containerPort: 32769
+            protocol: TCP
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+  status: {}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    creationTimestamp: null
+    labels:
+      metrics: gitlab
+    name: gitlab
+  spec:
+    port:
+      targetPort: gitlab-web
+    to:
+      kind: Service
+      name: gitlab
+labels:
+  template: gitlab
