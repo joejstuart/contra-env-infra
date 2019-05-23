@@ -7,6 +7,7 @@ RUN /usr/local/bin/install-plugins.sh /opt/openshift/plugins.txt && \
 
 USER 0
 RUN yum install epel-release -y && \
-    yum install jq -y
+    yum install jq -y && \
+    chmod 664 /etc/passwd
 USER 1001
 
