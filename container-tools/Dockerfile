@@ -5,7 +5,8 @@ LABEL k8s.io.description="Container to help build containers" \
       openshift.io.tags="contra, container-tools"
 
 RUN dnf install -y buildah make podman dumb-init procps && \
-    chmod 664 /etc/passwd
+    chmod 664 /etc/passwd && \
+    echo 10000 > /proc/sys/user/max_user_namespaces
 
 # change cgroup manager from systemd to cgroupfs
 COPY libpod.conf /etc/containers/libpod.conf
