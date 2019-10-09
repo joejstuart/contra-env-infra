@@ -10,16 +10,16 @@ CONTAINER_NAMESPACE ?= contrainfra
 
 .PHONY: build
 build:
-	buildah bud -t $(IMAGE_NAME) .
+	podman build -t $(IMAGE_NAME) .
 
 .PHONY: test
 test:
-	buildah bud -t $(IMAGE_NAME)-candidate .
+	podman build -t $(IMAGE_NAME)-candidate .
 	IMAGE_NAME=$(IMAGE_NAME)-candidate CONTAINER_NAME=$(CONTAINER_NAME) test/run
 
 .PHONY: push
 push:
-	buildah tag localhost/$(IMAGE_NAME)-candidate:latest localhost/$(IMAGE_NAME)-candidate:$(VERSION)
-	buildah push --creds $(USERNAME)\:$(PASSWORD) localhost/$(IMAGE_NAME)-candidate\:$(VERSION) \
+	podman tag localhost/$(IMAGE_NAME)-candidate:latest localhost/$(IMAGE_NAME)-candidate:$(VERSION)
+	podman push --creds $(USERNAME)\:$(PASSWORD) localhost/$(IMAGE_NAME)-candidate\:$(VERSION) \
     $(CONTAINER_REGISTRY)/$(CONTAINER_NAMESPACE)/$(IMAGE_NAME)\:$(VERSION)
 
