@@ -79,6 +79,7 @@ pipeline {
                 alwaysPullImage: true
                 image: "172.30.254.79:5000/continuous-infra/container-tools:latest"
                 command:
+                - uid_entrypoint
                 - cat
                 tty: true
                 privileged: true
