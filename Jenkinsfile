@@ -24,30 +24,24 @@ def testContainer(Map optional = [:], String imageName) {
     }
 
     def credentials = [usernamePassword(credentialsId: 'continuous-infra-contrainfra-dockercreds',
-                        usernameVariable: 'CONTAINER_USERNAME',
-                        passwordVariable: 'CONTAINER_PASSWORD')]
+        usernameVariable: 'CONTAINER_USERNAME',
+        passwordVariable: 'CONTAINER_PASSWORD')]
 
     def containers = ['container-tools': ['tag': 'latest']]
 
     def podTemplate = [containersWithProps: containers,
-                       docker_repo_url: '172.30.254.79:5000',
+                       docker_repo_url    : '172.30.254.79:5000',
                        openshift_namespace: 'continuous-infra',
-                       podName: 'container-builds',
+                       podName            : 'container-builds',
                        jenkins_slave_image: 'jenkins-contra-slave']
 
-    deployOpenShiftTemplate(podTemplate) {
-        ciPipeline(decorateBuild: decoratePRBuild(), sendMetrics: false) {
-
-            buildTestContainer(
-                    image_name: imageName,
-                    build_root: buildRoot,
-                    container_namespace: 'contrainfra',
-                    credentials: credentials,
-                    buildContainer: 'container-tools',
-                    versions: versions)
-
-        }
-    }
+    buildTestContainer(
+        image_name: imageName,
+        build_root: buildRoot,
+        container_namespace: 'contrainfra',
+        credentials: credentials,
+        buildContainer: 'container-tools',
+        versions: versions)
 
 }
 
@@ -57,7 +51,40 @@ def gitChangeLog(String searchItem) {
 }
 
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            cloud "openshift"
+            label "container-builds"
+            serviceAccount "jenkins"
+            defaultContainer "jnlp"
+            yaml """ 
+            apiVersion: v1
+            kind: Pod 
+            metadata:
+                labels:
+                  jenkins: slave
+                  jenkins/container-builds: "true"
+            spec:
+              containers:
+              - name: jnlp
+                alwaysPullImage: true
+                image: "172.30.254.79:5000/continuous-infra/jenkins-contra-slave:stable"
+                tty: true
+                resources:
+                  limits:
+                    memory: 500Mi
+                  requests:
+                    memory: 500Mi
+              - name: container-tools
+                alwaysPullImage: true
+                image: "172.30.254.79:5000/continuous-infra/container-tools:latest"
+                command:
+                - cat
+                tty: true
+                privileged: true
+            """
+        }
+    }
     stages {
         stage('checkout master branch') {
             // used for running on local non-master branches
