@@ -83,6 +83,9 @@ pipeline {
                 - cat
                 tty: true
                 privileged: true
+                env:
+                - name: HOME
+                  value: /var/tmp
             """
         }
     }
