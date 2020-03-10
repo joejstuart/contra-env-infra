@@ -14,7 +14,7 @@ create_library_config() {
   "name": "$repo_name",
   "url": "$1",
   "branch": "$2",
-  "implicit": true
+  "implicit": $3
 }
 EOF
 }
